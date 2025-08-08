@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Simple Reminders">
+    <title>Simple Reminders</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⏰</text></svg>">
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f0f23 100%);
+            color: #fff;
+            min-height: 100vh;
+            padding: 15px;
+        }
+        
+        .container {
+            max-width: 420px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .header p {
+            color: #94a3b8;
+            font-size: 14px;
+        }
+        
+        .status {
+            background: rgba(255,255,255,0.1);
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 13px;
+            text-align: center;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .status.online { 
+            background: rgba(34,197,94,0.15); 
+            color: #22c55e; 
+            border-color: rgba(34,197,94,0.3);
+        }
+        
+        .status.offline { 
+            background: rgba(239,68,68,0.15); 
+            color: #ef4444; 
+            border-color: rgba(239,68,68,0.3);
+        }
+        
+        .status.syncing {
+            background: rgba(245,158,11,0.15);
+            color: #f59e0b;
+            border-color: rgba(245,158,11,0.3);
+        }
+        
+        .notification-setup {
+            background: rgba(59, 130, 246, 0.15);
+            border: 2px solid rgba(59, 130, 246, 0.4);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .notification-setup h3 {
+            color: #60a5fa;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+        
+        .notification-setup p {
+            color: #94a3b8;
+            margin-bottom: 15px;
+            line-height: 1.4;
+        }
+        
+        .notification-btn {
+            background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-width: 200px;
+        }
+        
+        .notification-btn:hover:not(:disabled) { 
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.4);
+        }
+        
+        .notification-btn:disabled { 
+            background: rgba(100, 116, 139, 0.3);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .notification-status {
+            background: rgba(34, 197, 94, 0.15);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            color: #22c55e;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 14px;
+        }
+        
+        .notification-status.error {
+            background: rgba(239, 68, 68, 0.15);
+            border-color: rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+        }
+        
+        .ios-notice {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            color: #60a5fa;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+        
+        .add-form {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .form-row {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        
+        input, select, textarea {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 6px;
+            padding: 10px 12px;
+            color: #fff;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        
+        input::placeholder, textarea::placeholder {
+            color: #9ca3af;
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #60a5fa;
+            background: rgba(255,255,255,0.15);
+            box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1);
+        }
+        
+        input[type="datetime-local"] { 
+            flex: 1; 
+        }
+        
+        select { 
+            flex: 0 0 auto;
+            min-width: 90px;
+        }
+        
+        textarea { 
+            width: 100%; 
+            resize: none; 
+            height: 70px;
+            font-family: inherit;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        
+        button:hover:not(:disabled) { 
+            transform: translateY(-1px);
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+        }
+        
+        button:disabled { 
+            background: rgba(100, 116, 139, 0.3);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .btn-small {
+            padding: 6px 10px;
+            font-size: 12px;
+            min-width: auto;
+        }
+        
+        .btn-danger { 
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        }
+        
+        .btn-danger:hover:not(:disabled) { 
+            box-shadow: 0 8px 25px rgba(239, 68, 68, 0.3);
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+        }
+        
+        .btn-success:hover:not(:disabled) {
+            box-shadow: 0 8px 25px rgba(34, 197, 94, 0.3);
+        }
+        
+        .reminders {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .reminders h3 {
+            padding: 15px 20px;
+            background: rgba(255,255,255,0.1);
+            font-size: 16px;
+            margin: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .count-badge {
+            background: rgba(96, 165, 250, 0.3);
+            color: #60a5fa;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .reminder-item {
+            padding: 15px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            transition: all 0.3s ease;
+        }
+        
+        .reminder-item:hover {
+            background: rgba(255,255,255,0.05);
+        }
+        
+        .reminder-item:last-child { 
+            border-bottom: none; 
+        }
+        
+        .reminder-info {
+            flex: 1;
+            margin-right: 15px;
+        }
+        
+        .reminder-time {
+            font-weight: 600;
+            color: #60a5fa;
+            font-size: 15px;
+            margin-bottom: 4px;
+        }
+        
+        .reminder-note {
+            color: #d1d5db;
+            font-size: 14px;
+            margin-bottom: 6px;
+            line-height: 1.4;
+        }
+        
+        .reminder-meta {
+            display: flex;
+            gap: 15px;
+            font-size: 11px;
+            color: #9ca3af;
+        }
+        
+        .reminder-repeat {
+            background: rgba(139, 92, 246, 0.2);
+            color: #a78bfa;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+        
+        .reminder-status {
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+        
+        .reminder-status.upcoming {
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+        }
+        
+        .reminder-status.past {
+            background: rgba(107, 114, 128, 0.2);
+            color: #9ca3af;
+        }
+        
+        .reminder-actions {
+            display: flex;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+        
+        .empty {
+            padding: 40px 20px;
+            text-align: center;
+            color: #6b7280;
+            font-style: italic;
+        }
+        
+        .edit-form {
+            background: rgba(139,92,246,0.15);
+            border: 1px solid rgba(139,92,246,0.3);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .edit-form h4 {
+            margin-bottom: 15px;
+            color: #a78bfa;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .form-actions {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .quick-times {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+        
+        .quick-time-btn {
+            background: rgba(96, 165, 250, 0.2);
+            color: #60a5fa;
+            border: 1px solid rgba(96, 165, 250, 0.3);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .quick-time-btn:hover {
+            background: rgba(96, 165, 250, 0.3);
+            transform: translateY(-1px);
+        }
+        
+        @media (max-width: 480px) {
+            .container {
+                padding: 0 5px;
+            }
+            
+            .form-row {
+                flex-direction: column;
+                gap: 8px;
+            }
+            
+            select {
+                min-width: auto;
+            }
+            
+            .reminder-item {
+                padding: 12px 15px;
+            }
+            
+            .reminder-actions {
+                flex-direction: column;
+                gap: 4px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⏰ Simple Reminders</h1>
+            <p>Server-side scheduling • Offline capable</p>
+        </div>
+
+        <div id="status" class="status offline">
+            <span>📡</span> Connecting to server...
+        </div>
+
+        <div id="iosNotice" class="ios-notice" style="display: none;">
+            📱 <strong>iOS Users:</strong> Add to Home Screen for best experience and reliable notifications<br>
+            Safari → Share → Add to Home Screen
+        </div>
+
+        <!-- Notification Setup Section -->
+        <div id="notificationSetup" class="notification-setup" style="display: none;">
+            <h3>🔔 Enable Notifications</h3>
+            <p>Allow notifications to receive reminders from your Pi server</p>
+            <button id="enableNotificationsBtn" class="notification-btn">
+                🔔 Enable Notifications
+            </button>
+        </div>
+
+        <!-- Notification Status -->
+        <div id="notificationStatus" class="notification-status" style="display: none;">
+            ✅ Notifications enabled and ready!
+        </div>
+
+        <!-- Edit Form (hidden by default) -->
+        <div id="editForm" class="edit-form" style="display: none;">
+            <h4>✏️ Edit Reminder</h4>
+            <div class="form-row">
+                <input type="datetime-local" id="editDateTime" required>
+                <select id="editRepeat">
+                    <option value="once">Once</option>
+                    <option value="daily">Daily</option>
+                    <option value="weekly">Weekly</option>
+                </select>
+            </div>
+            <textarea id="editNote" placeholder="What do you want to be reminded about?"></textarea>
+            <div class="form-actions">
+                <button onclick="saveEdit()" class="btn-success">💾 Save Changes</button>
+                <button onclick="cancelEdit()" class="btn-danger">❌ Cancel</button>
+            </div>
+        </div>
+
+        <!-- Add Form -->
+        <div class="add-form">
+            <h3 style="margin-bottom: 15px; font-size: 16px; color: #e2e8f0;">➕ Add New Reminder</h3>
+            
+            <div class="quick-times">
+                <button type="button" class="quick-time-btn" onclick="setQuickTime(15)">+15 min</button>
+                <button type="button" class="quick-time-btn" onclick="setQuickTime(30)">+30 min</button>
+                <button type="button" class="quick-time-btn" onclick="setQuickTime(60)">+1 hour</button>
+                <button type="button" class="quick-time-btn" onclick="setQuickTime(1440)">Tomorrow</button>
+            </div>
+            
+            <div class="form-row">
+                <input type="datetime-local" id="dateTime" required>
+                <select id="repeat">
+                    <option value="once">Once</option>
+                    <option value="daily">Daily</option>
+                    <option value="weekly">Weekly</option>
+                </select>
+            </div>
+            <textarea id="note" placeholder="What do you want to be reminded about?"></textarea>
+            <button onclick="addReminder()" id="addBtn" style="margin-top: 15px; width: 100%;">
+                ➕ Add Reminder
+            </button>
+        </div>
+
+        <!-- Reminders List -->
+        <div class="reminders">
+            <h3>
+                📋 Your Reminders 
+                <span class="count-badge" id="count">0</span>
+            </h3>
+            <div id="remindersList">
+                <div class="empty">No reminders yet. Add one above! 👆</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
